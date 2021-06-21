@@ -1,6 +1,7 @@
 package com.example.fragmentsample;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -8,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -91,6 +93,9 @@ public class MenuListFragment extends Fragment {
         // adapterの登録
         lv.setAdapter(adapter);
 
+        // メニュータップ時のイベントリスナ登録
+        lv.setOnItemClickListener(new ListItemClickListener());
+
         // インフレートされた画面を返す
         return view;
     }
@@ -170,5 +175,26 @@ public class MenuListFragment extends Fragment {
         menuList.add(menu);
 
         return menuList;
+    }
+
+    private class ListItemClickListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            // タップされた行データ取得（データはMap型）
+            Map<String, String> map = (Map<String, String>) parent.getItemAtPosition(position);
+
+            String menu = map.get("name");
+            String price = map.get("price");
+
+            // 第二画面への引数設定
+            Intent intent = new Intent(getActivity(), MenuThanksActivity.class);
+            intent.putExtra("menu", menu);
+            intent.putExtra("price", price);
+
+            // 第二画面の起動
+            startActivity(intent);
+        }
     }
 }
