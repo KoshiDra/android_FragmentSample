@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,13 +55,21 @@ public class MenuThanksFragment extends Fragment {
         return fragment;
     }
 
+    private boolean isLayoutXLarge = true;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // 親クラスのメソッド呼び出し
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
+        // フラグメントマネージャー取得
+        FragmentManager fragmentManager = getFragmentManager();
+
+        // フラグメントマネージャーからメニューリストフラグメント取得
+        MenuListFragment menuListFragment = (MenuListFragment) fragmentManager.findFragmentById(R.id.fragmentMenuList);
+
+        // メニューリストフラグメントが存在しない（ = 画面サイズはスマホサイズ）
+        isLayoutXLarge = menuListFragment != null;
     }
 
     @Override
@@ -72,19 +82,25 @@ public class MenuThanksFragment extends Fragment {
         // フラグメントで表示する画面（XML）をインフレートする
         View view = inflater.inflate(R.layout.fragment_menu_thanks, container, false);
 
-        // 所属アクティビティからインテント取得
-        Intent intent = parentActivity.getIntent();
+        Bundle extras;
+        if (isLayoutXLarge) {
+            // このフラグメントに埋め込まれた引継ぎデータを取得
+            extras = getArguments();
+        } else {
+            // 所属アクティビティからインテント取得
+            Intent intent = parentActivity.getIntent();
 
-        // インテントから引継ぎデータの集約オブジェクト（Bundle）を取得
-        Bundle extra = intent.getExtras();
+            // インテントから引継ぎデータの集約オブジェクト（Bundle）を取得
+            extras = intent.getExtras();
+        }
 
         String menu = "";
         String price = "";
 
         // 引継ぎデータの集約オブジェクト（Bundle）存在時に値を取得
-        if (extra != null) {
-            menu = extra.getString("menu");
-            price = extra.getString("price");
+        if (extras != null) {
+            menu = extras.getString("menu");
+            price = extras.getString("price");
         }
 
         // TextViewに値を設定
@@ -99,8 +115,23 @@ public class MenuThanksFragment extends Fragment {
         button.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Activity parentActivity = getActivity();
-                parentActivity.finish();
+
+                if (isLayoutXLarge) {
+                    // フラグメントマネージャーの取得
+                    FragmentManager fragmentManager = getFragmentManager();
+
+                    // フラグメントトランザクションの開始
+                    FragmentTransaction fragmentTransaction= fragmentManager.beginTransaction();
+
+                    // 自分自身を削除
+                    fragmentTransaction.remove(MenuThanksFragment.this);
+
+                    // フラグメントトランザクションをコミット
+                    fragmentTransaction.commit();
+                } else {
+                    Activity parentActivity = getActivity();
+                    parentActivity.finish();
+                }
             }
         });
 

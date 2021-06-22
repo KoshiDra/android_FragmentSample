@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +26,9 @@ import java.util.Map;
  * create an instance of this fragment.
  */
 public class MenuListFragment extends Fragment {
+
+    // 大画面判定フラグ
+    private boolean isLayoutXLarge = true;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -185,16 +190,55 @@ public class MenuListFragment extends Fragment {
             // タップされた行データ取得（データはMap型）
             Map<String, String> map = (Map<String, String>) parent.getItemAtPosition(position);
 
-            String menu = map.get("name");
-            String price = map.get("price");
+            // 引継ぎデータを格納するBundleオブジェクトの生成
+            Bundle bundle = new Bundle();
+            bundle.putString("menu", map.get("name"));
+            bundle.putString("price", map.get("price"));
 
-            // 第二画面への引数設定
-            Intent intent = new Intent(getActivity(), MenuThanksActivity.class);
-            intent.putExtra("menu", menu);
-            intent.putExtra("price", price);
+            if (isLayoutXLarge) {
+                // フラグメントマネージャーの取得
+                FragmentManager fragmentManager = getFragmentManager();
 
-            // 第二画面の起動
-            startActivity(intent);
+                // フラグメントトランザクションの開始
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                // 注文完了フラグメントを生成
+                MenuThanksFragment menuThanksFragment = new MenuThanksFragment();
+
+                // 引継ぎデータを注文完了フラグメントに格納
+                menuThanksFragment.setArguments(bundle);
+
+                // 生成した注文完了フラグメントをmenuThanksFrameレイアウト部品に追加（置き換え）
+                fragmentTransaction.replace(R.id.menuThanksFrame, menuThanksFragment);
+
+                // フラグメントトランザクションのコミット
+                fragmentTransaction.commit();
+            } else {
+                // 第二画面への引数設定
+                Intent intent = new Intent(getActivity(), MenuThanksActivity.class);
+
+                // 第二画面に送るデータをBundleオブジェクトとしてまとめて格納
+                intent.putExtras(bundle);
+
+                // 第二画面の起動
+                startActivity(intent);
+            }
         }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+
+        // 親クラスのメソッド呼び出し
+        super.onActivityCreated(savedInstanceState);
+
+        // このフラグメントが所属するアクティビティオブジェクトの取得
+        Activity parentActivity = getActivity();
+
+        // 自分が所属するアクティビティからmenuThanksFrameを取得
+        View menuThanksFrame = parentActivity.findViewById(R.id.menuThanksFrame);
+
+        // menuThanksFrameが存在しない（ ＝ 通常のスマホ画面）
+        isLayoutXLarge = menuThanksFrame != null;
     }
 }
